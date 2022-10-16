@@ -9,6 +9,7 @@ __pycache__/
 # Distribution / packaging
 *.csv
 *.txt
+*.ipynb
 .Python
 build/
 develop-eggs/
