@@ -3,7 +3,7 @@ import altair as alt
 import pandas as pd
 
 
-df = pd.read_csv('../../courses/cmse-830/datasets/faa_wildlife_strikes/main_data.csv')
+# df = pd.read_csv('../../courses/cmse-830/datasets/faa_wildlife_strikes/main_data.csv')
 
 # add introduction about the data 
 # add FAA website link
