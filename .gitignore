@@ -8,7 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 *.csv
-*.txt
+# *.txt
 *.ipynb
 .Python
 build/
