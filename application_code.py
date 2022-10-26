@@ -24,15 +24,11 @@ except:
 # add introduction about the data 
 st.write("""
 ### Introduction
-- The FAA Wildlife Strike Database contains records of reported wildlife strikes since 1990.
-Since the strike reporting is voluntary, this database only represents the information FAA 
+- The FAA Wildlife Strike Database contains records of reported wildlife strikes since 1990. Since the strike reporting is voluntary, this database only represents the information FAA 
 has received from airlines, airports, pilots, and other sources. 
-- There is an observed increase in the wildlife strikes on planes from 1990 to 2022. As a result, there
-has been greater emphasis on wildlife strike hazard research and airfield wildlife management.
-
-- This application is a window to diving deeper into the data and understanding the economical
-aspects related to it. 
-The dataset can be found at [FAA Wildlife strikes Data](https://wildlife.faa.gov/home).
+- There is an observed increase in the wildlife strikes on planes from 1990 to 2022. As a result, there has been greater emphasis on wildlife strike hazard research and airfield wildlife management.
+- This application is a window to diving deeper into the data and understanding the economical aspects related to it. 
+- The dataset can be found at [FAA Wildlife strikes Data](https://wildlife.faa.gov/home).
 """)
 
 # ADD SEPARATOR
@@ -66,7 +62,7 @@ int_tab_1, int_tab_2, int_tab_3, int_tab_4, int_tab_5 = st.tabs(
     ]
 )
 with int_tab_1:
-    st.header('Total number of Wildlife Strikes through the years')
+    st.write('##### Total number of Wildlife Strikes through the years')
     temp_df = df.groupby(
         'INCIDENT_YEAR'
     )['INCIDENT_YEAR'].agg('count').to_frame('counts').reset_index()
@@ -79,7 +75,7 @@ with int_tab_1:
     st.altair_chart(chart_1, use_container_width=True)
 
 with int_tab_2:
-    st.header('Total number of Strikes with small species through the years')
+    st.write('##### Total number of Strikes with small species through the years')
     temp_df = df[df.SIZE == 'Small'].groupby(
         'INCIDENT_YEAR'
     )['INCIDENT_YEAR'].agg('count').to_frame('counts').reset_index()
@@ -92,7 +88,7 @@ with int_tab_2:
     st.altair_chart(chart_2, use_container_width=True)
 
 with int_tab_3:
-    st.header('Total number of Strikes with medium and large species throughthe years')
+    st.write('##### Total number of Strikes with medium and large species throughthe years')
     temp_df = df[df.SIZE.isin(['Medium', 'Large'])].groupby(
         'INCIDENT_YEAR'
     )['INCIDENT_YEAR'].agg('count').to_frame('counts').reset_index()
@@ -132,18 +128,22 @@ st.write(
     Info : Since data is too big showing map on randomly sampled 50k subset.
     '''
 )
-# m_df = df.sample(50000)
-# missing_value_heatmap = plt.figure(figsize=(20,20))
-# sns.heatmap(m_df.isna().transpose(), cmap="viridis")
-# st.pyplot(missing_value_heatmap)
+m_df = df.sample(50000)
+missing_value_heatmap = plt.figure(figsize=(20,20))
+sns.heatmap(m_df.isna().transpose(), cmap="viridis")
+st.pyplot(missing_value_heatmap)
 # and mention the missing type 
 st.write(
     '''
-    #### Observations :
+    ##### Observations :
     1) Cost related fields have a lot of Null values
     2) NUM_SEEN, WARNED, EFFECT also have fairly high number of Null values.
     3) Missingness type is Missingness at Random, as most of the values can be inferred from other fields using rules.
+    4) Since this data is self reported we can expect that sometimes even the person who is filling up the form may not know every detail and leave blanks.
     - Some suggestions are provided to fill the missing values.
+        1) Filling up time of day using local time
+        2) Finding missing states used latitude and longitude and FAA region
+        3) Finding Cost through indicated damage and which part of plane is struck conditioned on Aircraft type
     '''
 )
 
@@ -201,13 +201,14 @@ if analysis_1 == 'Airport':
         #### Airport Analysis of 100 Airports with most Strikes
         '''
     )
-    air_tab_1, air_tab_2, air_tab_3, air_tab_4, air_tab_5, air_tab_6 = st.tabs(
+    air_tab_1, air_tab_2, air_tab_3, air_tab_4, air_tab_5, air_tab_6, air_tab_7 = st.tabs(
         [
             'Number of Strikes during the period selected:', 
             'Number of Strikes with distinction in Damage Level',
             'Number of Strikes with Minor or Substantial Damage',
             'Damage Level Trends', 'Greatest Cost of Repairs for Airports',
-            'Greatest Cost of Repairs for Operators'
+            'Greatest Cost of Repairs for Operators',
+            'Cost Incurred due to Strikes over the years'
         ]
     )
 
@@ -269,7 +270,7 @@ if analysis_1 == 'Airport':
             substantial_damage=('DAMAGE_LEVEL', lambda x: Counter(x)['Substantial']),
             destroyed=('DAMAGE_LEVEL', lambda x: Counter(x)['Destroyed'])
         ).reset_index()
-        temp_df = temp_df.melt(id_vars=['INCIDENT_YEAR'], value_vars=['minor_damage', 'substantial_damage', 'destroyed'])
+        temp_df = temp_df.melt(id_vars=['INCIDENT_YEAR'], value_vars=['no_damage', 'minor_damage', 'substantial_damage', 'destroyed'])
         chart_8 = alt.Chart(temp_df).mark_line().encode(
             alt.X('INCIDENT_YEAR', axis=alt.Axis(format='%Y')),
             y='value:Q',
@@ -309,14 +310,20 @@ if analysis_1 == 'Airport':
         ).interactive()
         st.altair_chart(chart_8_2, use_container_width=True)
 
-    st.write(
-        '''
-        #### Observations :
-        1)
-        2)
-        3)
-        '''
-    ) 
+    with air_tab_7:
+        st.write(
+            '''
+            ##### Cost of Repairs through the years
+            '''
+        )
+        temp_df = df.groupby('INCIDENT_YEAR').agg(
+            Cost_of_Repairs=('COST_REPAIRS', 'sum')
+        ).reset_index()
+        chart_8_3 = alt.Chart(temp_df).mark_line().encode(
+            alt.X('INCIDENT_YEAR', axis=alt.Axis(format='%Y')),
+            y='Cost_of_Repairs:Q',
+        ).interactive()
+        st.altair_chart(chart_8_3, use_container_width=True)
 elif analysis_1 == 'Phase of Flight':
     st.write(
         '''
@@ -465,7 +472,7 @@ elif analysis_2 == "Speed":
         st.altair_chart(chart_14_1, use_container_width=True)
 
     with sp_tab_3:
-        st.write('#### Speed with Precipitation and Type of Engine')
+        st.write('#### Speed with Precipitation and Number of Engines')
         temp_df = df.dropna(subset=['PRECIPITATION', 'NUM_ENGS', 'SPEED'])
         chart_15 = alt.Chart(temp_df).mark_boxplot().encode(
             alt.Y("SPEED:Q"),
