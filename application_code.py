@@ -15,7 +15,7 @@ st.write("""
 """)
 
 try:
-    df = pd.read_csv('../../courses/cmse-830/datasets/faa_wildlife_strikes/main_data.csv')
+    df = pd.read_csv('data/main_data.csv')
     print('df loading successful')
 except:
     print('Something went wrong in loading data.')
