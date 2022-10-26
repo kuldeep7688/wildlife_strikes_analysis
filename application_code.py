@@ -4,8 +4,8 @@ import pandas as pd
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
-from utilities import preprocess_text_fields, remapping_function
-from utilities import altair_jointplot_speed_and_height, get_correlation_graph
+from app.wildlife_strikes_analysis.utilities import preprocess_text_fields, remapping_function
+from app.wildlife_strikes_analysis.utilities import altair_jointplot_speed_and_height, get_correlation_graph
 from collections import Counter
 st.set_page_config(layout="wide")
 
