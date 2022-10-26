@@ -1,3 +1,4 @@
+import altair as alt
 import numpy as np
 import pandas as pd
 
@@ -154,3 +155,73 @@ def remapping_function(df):
     df['AC_MASS'] = df.AC_MASS.apply(lambda x : map_to_provided_labels(x, AC_MASS_MAPPING))
     df['TYPE_ENG'] = df.TYPE_ENG.apply(lambda x : map_to_provided_labels(x, TYPE_ENGINE_MAPPING))
     return df
+
+
+def altair_jointplot_speed_and_height(df, color_column, opacity=0.3):
+    base = alt.Chart(df)
+    xscale = alt.Scale(domain=(0.0, 340.0))
+    yscale = alt.Scale(domain=(0.0, 16500.0))
+    bar_args = {'opacity': opacity, 'binSpacing': 0}
+    points = base.mark_circle().encode(
+        alt.X('SPEED', scale=xscale),
+        alt.Y('HEIGHT', scale=yscale),
+        color=color_column,
+    ).interactive()
+
+    top_hist = base.mark_bar(**bar_args).encode(
+        alt.X('SPEED:Q',
+            # when using bins, the axis scale is set through
+            # the bin extent, so we do not specify the scale here
+            # (which would be ignored anyway)
+            bin=alt.Bin(maxbins=20, extent=xscale.domain),
+            stack=None,
+            title=''
+            ),
+        alt.Y('count()', stack=None, title=''),
+        alt.Color('{}:N'.format(color_column)),
+    ).properties(height=60).interactive()
+
+    right_hist = base.mark_bar(**bar_args).encode(
+        alt.Y('HEIGHT:Q',
+            bin=alt.Bin(maxbins=20, extent=yscale.domain),
+            stack=None,
+            title='',
+            ),
+        alt.X('count()', stack=None, title=''),
+        alt.Color('{}:N'.format(color_column)),
+    ).properties(width=60).interactive()
+    return top_hist & (points | right_hist)
+
+
+def get_correlation_graph(df, col_list):
+    cor_data = (df[col_list]).corr().stack().reset_index().rename(columns={0: 'correlation', 'level_0': 'variable', 'level_1': 'variable2'})
+    cor_data['correlation_label'] = cor_data['correlation'].map('{:.2f}'.format)  # Round to 2 decimal
+    cor_data.head()
+    base = alt.Chart(cor_data).encode(
+        x='variable2:O',
+        y='variable:O'    
+    )
+
+    # Text layer with correlation labels
+    # Colors are for easier readability
+    text = base.mark_text().encode(
+        text='correlation_label',
+        color=alt.condition(
+            alt.datum.correlation > 0.5, 
+            alt.value('white'),
+            alt.value('black')
+        )
+    ).properties(
+        width=1000,
+        height=1000
+    ).interactive()
+
+    # The correlation heatmap itself
+    cor_plot = base.mark_rect().encode(
+        color='correlation:Q'
+    ).properties(
+        width=1000,
+        height=1000
+    ).interactive()
+
+    return cor_plot + text # The '+' means overlaying the text and rect layer
